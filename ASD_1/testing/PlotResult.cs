@@ -1,7 +1,7 @@
-﻿using ASD_1.algorithms;
+﻿using ASD_1.datagen;
 using ScottPlot;
 
-namespace ASD_1.testing.result_exporters;
+namespace ASD_1.testing;
 
 public class PlotResults(int from, int to, string algorithmName)
 {
@@ -12,15 +12,14 @@ public class PlotResults(int from, int to, string algorithmName)
 
     public PlotResults AddScatter(Color color, Func<int, int> mathFunction)
     {
-        int[] scatterDots = new int[_length];
-        int[] elementAmounts = new int[_length];
+        int[] yDots = new int[_length]; //y
+        int[] xDots = new int[_length]; //x
         for (int i = from; i <= to; i++)
         {
-            scatterDots[i-1] = mathFunction.Invoke(i);
-            elementAmounts[i-1] = i;
+            yDots[i-1] = mathFunction.Invoke(i);
+            xDots[i-1] = i;
         }
-
-        var scatter = _plot.Add.Scatter(elementAmounts, scatterDots);
+        var scatter = _plot.Add.Scatter(xDots, yDots);
         scatter.Color = color;
 
         return this;
@@ -28,20 +27,19 @@ public class PlotResults(int from, int to, string algorithmName)
 
     public PlotResults Add3SetsScatter(SortingAlgorithm sortingAlgorithm)
     {
-        AddTestRunScatter(Colors.Blue, sortingAlgorithm, GenType.AVG);
-        AddTestRunScatter(Colors.Green, sortingAlgorithm, GenType.SORTED);
-        AddTestRunScatter(Colors.Red, sortingAlgorithm, GenType.REVERSED);
+        AddTestRunScatter(Colors.Blue, sortingAlgorithm, Datagen.RND_UNIQUE);
+        AddTestRunScatter(Colors.Green, sortingAlgorithm, Datagen.SORTED);
+        AddTestRunScatter(Colors.Red, sortingAlgorithm, Datagen.REVERSED);
         return this;
     }
 
-    public PlotResults AddTestRunScatter(Color color, SortingAlgorithm sortingAlgorithm, GenType genType)
+    public PlotResults AddTestRunScatter(Color color, SortingAlgorithm sortingAlgorithm, Datagen generator)
     {
-        Console.WriteLine($"Runs test {genType} {sortingAlgorithm.Name}");
+        Console.WriteLine($"Runs test {sortingAlgorithm.GetName()}");
         AddScatter(color, (arrLen) =>
         {
-            var operationCounter = new OperationCounter();
-            sortingAlgorithm.Implementation.Invoke(Datagen.Gen(genType, arrLen), operationCounter);
-            return operationCounter.GetTestResult().Operations;
+            sortingAlgorithm.Sort(generator.Gen(arrLen));
+            return sortingAlgorithm.Operations;
         });
         return this;
     }
